@@ -74,6 +74,7 @@ async function exportSnapshot(scope: "SELECTION" | "PAGE", endpoint: string, inc
 }
 
 figma.ui.onmessage = async (message) => {
+  if (message.type === "ready") { postStatus(); return; }
   if (message.type === "ping") { try { const response = await fetch(`${message.endpoint}/health`); figma.ui.postMessage({ type: "connection", connected: response.ok }); } catch { figma.ui.postMessage({ type: "connection", connected: false }); } return; }
   if (message.type === "export") try { await exportSnapshot(message.scope, message.endpoint, message.includeHidden, message.scale); } catch (error) { console.error(error); figma.ui.postMessage({ type: "error", message: error instanceof Error ? error.message : String(error) }); }
 };
