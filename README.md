@@ -53,6 +53,12 @@ Keep PostgreSQL and the API running while exporting or querying snapshots. Figma
 
 A deployment is optional and outside the MVP. It would only be useful if the API/database/storage must be shared across machines. The default plugin manifest deliberately permits only the local development endpoint.
 
+## Figma Desktop is required
+
+The current supported workflow uses **Figma Desktop for macOS or Windows**. Figma web cannot import this repository's local development manifest, so it is not supported for exporting snapshots in the MVP.
+
+This does **not** require a paid Figma plan or Dev Mode. Figma Desktop with a Starter account and an editable Figma Design file is sufficient. The API, PostgreSQL, storage, and MCP remain local; nothing needs to be deployed.
+
 ## Quick start
 
 ### 1. Start PostgreSQL and the API with Docker
@@ -94,7 +100,7 @@ bun run docker:down
 
 `docker:down` preserves snapshots and database data. To deliberately delete the Docker database as well, run `docker compose down --volumes`.
 
-### 2. Install the local Figma plugin
+### 2. Install the local Figma plugin in Figma Desktop
 
 Local development plugins must be imported from the **Figma desktop app**. The browser editor cannot import a local manifest.
 
