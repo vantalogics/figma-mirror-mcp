@@ -1,7 +1,7 @@
 {
   "name": "@figma-mirror/mcp",
   "type": "module",
-  "scripts": { "dev": "bun src/main.ts", "start": "bun src/main.ts", "build": "bun build src/main.ts --target bun --outdir dist", "typecheck": "tsc" },
+  "scripts": { "dev": "bun --env-file=../../.env src/main.ts", "start": "bun --env-file=../../.env src/main.ts", "build": "bun build src/main.ts --target bun --outdir dist", "typecheck": "tsc" },
   "dependencies": { "@figma-mirror/shared": "workspace:*", "@modelcontextprotocol/sdk": "^1.30.0", "zod": "^4.4.3" },
   "devDependencies": { "typescript": "^7.0.2", "@types/bun": "1" }
 }

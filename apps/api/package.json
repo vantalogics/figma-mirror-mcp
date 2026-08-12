@@ -2,12 +2,12 @@
   "name": "@figma-mirror/api",
   "type": "module",
   "scripts": {
-    "dev": "bun --watch src/main.ts",
-    "start": "bun src/main.ts",
+    "dev": "bun --env-file=../../.env --watch src/main.ts",
+    "start": "bun --env-file=../../.env src/main.ts",
     "build": "bun build src/main.ts --target bun --outdir dist",
     "typecheck": "tsc",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "bun src/db/migrate.ts"
+    "db:migrate": "bun --env-file=../../.env src/db/migrate.ts"
   },
   "devDependencies": {
     "@types/bun": "1",

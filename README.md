@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/assets/vantalogics-banner.webp" alt="Vantalogics" width="760">
+  <img src="docs/assets/vantalogics-logo-black.png" alt="Vantalogics" width="180">
 </p>
 
 # Figma Mirror MCP
