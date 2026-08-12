@@ -96,10 +96,13 @@ bun run docker:down
 
 ### 2. Install the local Figma plugin
 
-1. In Figma Design, open **Plugins → Development → Import plugin from manifest**.
-2. Select `apps/plugin/manifest.json` from this repository.
-3. Open an editable file and run **Figma Mirror**.
-4. The plugin should show `API · Connected`.
+Local development plugins must be imported from the **Figma desktop app**. The browser editor cannot import a local manifest.
+
+1. Open the design in the Figma desktop app.
+2. Open the Figma menu in the upper-left, then choose **Plugins → Development → Import new plugin from manifest**.
+3. Select `apps/plugin/manifest.json` from this repository.
+4. Open an editable file and run **Figma Mirror**.
+5. The plugin should show `API · Connected`.
 
 This is a local development plugin installation, not a Figma Community publication. It works with Figma Starter.
 
@@ -123,7 +126,7 @@ inspect "Dashboard / Desktop", and implement it exactly.
 - Bun 1.3 or newer
 - Docker Desktop or another Docker Engine with Compose (recommended)
 - PostgreSQL only when choosing the native setup
-- Figma desktop or browser with permission to run development plugins
+- Figma desktop app to import the local development plugin
 
 Docker is optional; it is the easiest way to avoid local PostgreSQL users, passwords, and port conflicts.
 
@@ -169,9 +172,10 @@ bun run db:migrate
 ## Import the plugin into Figma
 
 1. Run `bun run dev:plugin` once so `apps/plugin/dist` exists.
-2. In Figma Design, choose **Plugins → Development → Import plugin from manifest**.
-3. Select `apps/plugin/manifest.json`.
-4. Open an editable design, run **Figma Mirror**, and verify that API shows `Connected`.
+2. Open the design in the Figma desktop app. Local manifests cannot be imported from the browser editor.
+3. Open the upper-left Figma menu and choose **Plugins → Development → Import new plugin from manifest**.
+4. Select `apps/plugin/manifest.json`.
+5. Open an editable design, run **Figma Mirror**, and verify that API shows `Connected`.
 
 The development manifest only allows `http://localhost:3000`. If `PORT` changes, update `devAllowedDomains` in the manifest and the endpoint shown in the plugin.
 
