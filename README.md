@@ -245,7 +245,7 @@ A typical agent workflow is:
 list_projects → get_latest_snapshot → inspect_design("Dashboard / Desktop")
 ```
 
-`get_node` defaults to one descendant level and `get_frame` defaults to two. This keeps context small. `get_screenshot` and `inspect_design` return MCP `image` content when the client supports it and also expose an absolute local path.
+`get_node` defaults to one descendant level and `get_frame` defaults to two. This keeps context small. `get_screenshot` and `inspect_design` return MCP `image` content when the client supports it and also expose an absolute local path. When a descendant does not have its own screenshot, the MCP automatically finds the closest ancestor screenshot, crops it using the stored Figma geometry and actual PNG dimensions, and caches the derived image under `data/<snapshot-id>/derived/`.
 
 ## API upload protocol
 
