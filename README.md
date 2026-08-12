@@ -1,10 +1,12 @@
 <p align="center">
-  <img src="docs/assets/vantalogics-logo-black.png" alt="Vantalogics" width="180">
+  <a href="https://vantalogics.com">
+    <img src="docs/assets/vantalogics-logo-black.png" alt="Vantalogics" width="180">
+  </a>
 </p>
 
 # Figma Mirror MCP
 
-> A free, local-first developer tool by **Vantalogics**.
+> A free, local-first developer tool by **[Vantalogics](https://vantalogics.com)**.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-black.svg)](LICENSE)
 [![Figma plan](https://img.shields.io/badge/Figma-Starter-000000.svg)](#no-paid-figma-requirement)
@@ -18,7 +20,7 @@ Figma Design → classic plugin → local API/PostgreSQL/files → MCP → codin
 
 Figma is only the source. Once exported, Codex CLI, Claude Code, and other MCP clients read the local mirror without contacting Figma again.
 
-Figma Mirror MCP is part of **Vantalogics Free Products**: practical developer tools released at no cost, with source code available under a permissive license. It is not affiliated with or endorsed by Figma.
+Figma Mirror MCP is part of **[Vantalogics Free Products](https://vantalogics.com)**: practical developer tools released at no cost, with source code available under a permissive license. It is not affiliated with or endorsed by Figma.
 
 ## No paid Figma requirement
 
@@ -53,25 +55,44 @@ A deployment is optional and outside the MVP. It would only be useful if the API
 
 ## Quick start
 
-### 1. Start PostgreSQL and the API
+### 1. Start PostgreSQL and the API with Docker
 
-Create a local database using your normal PostgreSQL installation, then configure and migrate it:
+This is the recommended path. It does not use or modify PostgreSQL installations already present on your computer:
 
 ```bash
 bun install
-cp .env.example .env
-createdb figma_mirror
-bun run db:migrate
-bun run dev
+bun run build:plugin
+bun run docker:up
 ```
 
-If PostgreSQL uses a password or a different port, edit `DATABASE_URL` in `.env` before running the migration. `bun run dev` starts the API and keeps the Figma plugin build updated.
+Docker Compose starts:
+
+- PostgreSQL isolated inside the Compose network, with no host port and therefore no conflict with local databases or tunnels;
+- the API on `http://localhost:3000`;
+- a persistent Docker volume for PostgreSQL;
+- automatic Drizzle migrations before the API starts;
+- a bind mount from `data/` to the API so local MCP clients can read screenshots and assets.
+
+Wait until both services report healthy:
+
+```bash
+docker compose ps
+```
 
 Confirm the API is available:
 
 ```bash
 bun -e 'console.log(await fetch("http://localhost:3000/health").then(r => r.json()))'
 ```
+
+To inspect API logs or stop the local stack:
+
+```bash
+bun run docker:logs
+bun run docker:down
+```
+
+`docker:down` preserves snapshots and database data. To deliberately delete the Docker database as well, run `docker compose down --volumes`.
 
 ### 2. Install the local Figma plugin
 
@@ -100,10 +121,25 @@ inspect "Dashboard / Desktop", and implement it exactly.
 ## Requirements
 
 - Bun 1.3 or newer
-- PostgreSQL
+- Docker Desktop or another Docker Engine with Compose (recommended)
+- PostgreSQL only when choosing the native setup
 - Figma desktop or browser with permission to run development plugins
 
-No Docker is required.
+Docker is optional; it is the easiest way to avoid local PostgreSQL users, passwords, and port conflicts.
+
+## Native setup without Docker
+
+If you already manage PostgreSQL locally, copy `.env.example`, set `DATABASE_URL` to a role whose password you know, create the database with that role, then migrate and start development:
+
+```bash
+bun install
+cp .env.example .env
+createdb --host=localhost --username=<POSTGRES_USER> figma_mirror
+bun run db:migrate
+bun run dev
+```
+
+The error `password authentication failed for user "agustin"` means the local PostgreSQL server requested the password for its `agustin` database role and the supplied password was incorrect. It is unrelated to your macOS password and to Figma Mirror. Use a known PostgreSQL role or the recommended Docker path.
 
 ## Development
 
@@ -117,6 +153,10 @@ Useful commands:
 bun run dev:api
 bun run dev:plugin
 bun run dev:mcp
+bun run build:plugin
+bun run docker:up
+bun run docker:down
+bun run docker:logs
 bun run typecheck
 bun test
 bun run build
@@ -223,6 +263,6 @@ The screenshot is the visual truth. Structured data explains how to reproduce it
 
 ## License
 
-Figma Mirror MCP is a free and open-source product from **Vantalogics**, released under the [MIT License](LICENSE).
+Figma Mirror MCP is a free and open-source product from **[Vantalogics](https://vantalogics.com)**, released under the [MIT License](LICENSE).
 
-You may use, copy, modify, distribute, and include it in commercial projects, provided the copyright and license notice are retained. The software is provided without warranty. The Vantalogics name and logo identify the project publisher; the MIT License does not grant trademark rights.
+You may use, copy, modify, distribute, and include it in commercial projects, provided the copyright and license notice are retained. The software is provided without warranty. The [Vantalogics](https://vantalogics.com) name and logo identify the project publisher; the MIT License does not grant trademark rights.

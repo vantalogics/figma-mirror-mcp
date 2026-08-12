@@ -1,0 +1,6 @@
+.git
+.env
+node_modules
+apps/*/dist
+data
+.DS_Store

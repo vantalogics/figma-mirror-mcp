@@ -1,0 +1,45 @@
+name: figma-mirror
+
+services:
+  db:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: figma_mirror
+      POSTGRES_PASSWORD: figma_mirror
+      POSTGRES_DB: figma_mirror
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U figma_mirror -d figma_mirror"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+      start_period: 5s
+    restart: unless-stopped
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      PORT: 3000
+      DATABASE_URL: postgres://figma_mirror:figma_mirror@db:5432/figma_mirror
+      DATA_DIR: /app/data
+    ports:
+      - "${PORT:-3000}:3000"
+    volumes:
+      - ./data:/app/data
+    depends_on:
+      db:
+        condition: service_healthy
+        restart: true
+    healthcheck:
+      test: ["CMD", "bun", "-e", "const r = await fetch('http://localhost:3000/health'); process.exit(r.ok ? 0 : 1)"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
