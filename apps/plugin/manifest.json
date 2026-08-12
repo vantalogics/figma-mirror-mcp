@@ -1,0 +1,14 @@
+{
+  "name": "Figma Mirror",
+  "id": "figma-mirror-local-development",
+  "api": "1.0.0",
+  "main": "dist/code.js",
+  "ui": "dist/ui.html",
+  "editorType": ["figma"],
+  "documentAccess": "dynamic-page",
+  "networkAccess": {
+    "allowedDomains": ["none"],
+    "devAllowedDomains": ["http://localhost:3000"],
+    "reasoning": "Uploads user-requested local design snapshots to the local Figma Mirror API."
+  }
+}

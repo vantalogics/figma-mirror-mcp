@@ -1,0 +1,8 @@
+{
+  "name": "@figma-mirror/shared",
+  "type": "module",
+  "exports": { ".": "./src/index.ts" },
+  "scripts": { "typecheck": "tsc" },
+  "dependencies": { "zod": "^4.4.3" },
+  "devDependencies": { "typescript": "^7.0.2", "@types/bun": "1" }
+}

@@ -1,0 +1,11 @@
+{
+  "name": "@figma-mirror/plugin",
+  "type": "module",
+  "scripts": {
+    "dev": "bun build src/code.ts src/ui.html --outdir dist --watch",
+    "build": "bun build src/code.ts src/ui.html --outdir dist",
+    "typecheck": "tsc"
+  },
+  "dependencies": { "@figma-mirror/shared": "workspace:*" },
+  "devDependencies": { "@figma/plugin-typings": "^1.133.0", "typescript": "^7.0.2" }
+}
