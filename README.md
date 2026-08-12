@@ -61,70 +61,121 @@ This does **not** require a paid Figma plan or Dev Mode. Figma Desktop with a St
 
 ## Quick start
 
-### 1. Start PostgreSQL and the API with Docker
+### 1. Install and start
 
-This is the recommended path. It does not use or modify PostgreSQL installations already present on your computer:
+Clone the repository and start the local stack:
 
 ```bash
+git clone https://github.com/vantalogics/figma-mirror-mcp.git
+cd figma-mirror-mcp
 bun install
 bun run build:plugin
 bun run docker:up
 ```
 
-Docker Compose starts:
+Docker Compose starts PostgreSQL and the API at `http://localhost:3000`, applies migrations, and keeps snapshot files in `data/`. It does not use or modify PostgreSQL installations already present on your computer.
 
-- PostgreSQL isolated inside the Compose network, with no host port and therefore no conflict with local databases or tunnels;
-- the API on `http://localhost:3000`;
-- a persistent Docker volume for PostgreSQL;
-- automatic Drizzle migrations before the API starts;
-- a bind mount from `data/` to the API so local MCP clients can read screenshots and assets.
+Useful lifecycle commands:
 
-Wait until both services report healthy:
+| Action | Command |
+| --- | --- |
+| Start or update | `bun run docker:up` |
+| Check status | `docker compose ps` |
+| Follow API logs | `bun run docker:logs` |
+| Stop | `bun run docker:down` |
 
-```bash
-docker compose ps
-```
+Stopping preserves snapshots and database data. To deliberately delete the Docker database, use `docker compose down --volumes`.
 
-Confirm the API is available:
+Optional health check:
 
 ```bash
 bun -e 'console.log(await fetch("http://localhost:3000/health").then(r => r.json()))'
 ```
 
-To inspect API logs or stop the local stack:
+### 2. Import the plugin into Figma Desktop
+
+This is required only once per local clone:
+
+1. Open an editable Figma Design file in **Figma Desktop**.
+2. Press `Cmd/Ctrl + K` to open **Actions**.
+3. Search for **Import new plugin from manifest**.
+4. Select `apps/plugin/manifest.json` inside the cloned repository.
+
+The browser editor cannot import a local manifest. This classic development plugin works with Figma Starter and does not require Dev Mode.
+
+### 3. Export a frame
+
+1. Select one concrete frame in the canvas or Layers panel.
+2. Press `Cmd/Ctrl + K`, search for **Figma Mirror**, and run it.
+3. Confirm that the plugin shows `API · Connected` and the expected selection name.
+4. Keep screenshot scale at `2×` and click **Export Selection**.
+5. Wait for the node count, asset count, screenshot confirmation, and snapshot version.
+
+Every export creates a new immutable version. If the source is view-only, duplicate it to Drafts first when its copying permissions allow it.
+
+### 4. Connect Claude Code or Codex CLI
+
+Run the configuration command from the Figma Mirror repository root. `REPO_PATH="$(pwd)"` captures its absolute path for you.
+
+| Client | Configuration scope | Verify |
+| --- | --- | --- |
+| Claude Code | User, available across local projects | `claude mcp get figma-mirror` or `/mcp` |
+| Codex CLI | User configuration | `codex mcp list` |
+
+#### Claude Code
 
 ```bash
-bun run docker:logs
-bun run docker:down
+REPO_PATH="$(pwd)"
+
+claude mcp add \
+  --transport stdio \
+  --scope user \
+  figma-mirror \
+  -e FIGMA_MIRROR_API_URL=http://localhost:3000 \
+  -e DATA_DIR="$REPO_PATH/data" \
+  -- bun run --cwd "$REPO_PATH" dev:mcp
+
+claude mcp get figma-mirror
 ```
 
-`docker:down` preserves snapshots and database data. To deliberately delete the Docker database as well, run `docker compose down --volumes`.
+#### Codex CLI
 
-### 2. Install the local Figma plugin in Figma Desktop
+```bash
+REPO_PATH="$(pwd)"
 
-Local development plugins must be imported from the **Figma desktop app**. The browser editor cannot import a local manifest.
+codex mcp add figma-mirror \
+  --env FIGMA_MIRROR_API_URL=http://localhost:3000 \
+  --env DATA_DIR="$REPO_PATH/data" \
+  -- bun run --cwd "$REPO_PATH" dev:mcp
 
-1. Open the design in the Figma desktop app.
-2. Open the Figma menu in the upper-left, then choose **Plugins → Development → Import new plugin from manifest**.
-3. Select `apps/plugin/manifest.json` from this repository.
-4. Open an editable file and run **Figma Mirror**.
-5. The plugin should show `API · Connected`.
+codex mcp list
+```
 
-This is a local development plugin installation, not a Figma Community publication. It works with Figma Starter.
+The coding client launches the MCP stdio process when needed. Do not run `bun run dev:mcp` separately. Keep the Docker stack running while the agent reads snapshots; Figma itself can be closed after export.
 
-### 3. Export a design
+### 5. Ask the agent to inspect and implement
 
-Select a frame, run the plugin, and click **Export Selection**. The API stores an immutable `READY` snapshot with its real 2× screenshot, node tree, visual properties, variables, components, and assets.
-
-### 4. Connect your coding agent
-
-Configure Codex or Claude Code using the commands below. The client launches the MCP stdio process when needed, so you do not normally start `bun run dev:mcp` in another terminal.
-
-Then ask the agent something like:
+Start with a read-only discovery prompt:
 
 ```text
-Use Figma Mirror. Find the latest Dashboard snapshot,
-inspect "Dashboard / Desktop", and implement it exactly.
+Use the Figma Mirror MCP tools.
+
+1. Run list_projects and find the relevant project.
+2. Get its latest READY snapshot.
+3. Run list_frames and identify the frame I just exported.
+4. Inspect it with inspect_design and examine the original screenshot.
+
+Tell me which project, snapshot version, and frame you found. Do not implement anything yet.
+```
+
+Then run the coding agent inside the project that should receive the implementation and use:
+
+```text
+Implement the design you inspected with Figma Mirror in this project.
+
+Treat the original Figma screenshot as the visual source of truth. Match the dimensions, structure, layout, spacing, alignment, typography, colors, effects, components, and original assets as closely as possible.
+
+Use get_node, get_frame, get_component, get_asset, or get_screenshot whenever you need more detail. Follow the existing stack and conventions of this repository, run the application, and verify the result before finishing.
 ```
 
 ## Requirements
@@ -148,7 +199,7 @@ bun run db:migrate
 bun run dev
 ```
 
-The error `password authentication failed for user "agustin"` means the local PostgreSQL server requested the password for its `agustin` database role and the supplied password was incorrect. It is unrelated to your macOS password and to Figma Mirror. Use a known PostgreSQL role or the recommended Docker path.
+An error such as `password authentication failed for user "<name>"` means the local PostgreSQL server rejected that database role's password. It is unrelated to the operating-system password and to Figma Mirror. Use a known PostgreSQL role or the recommended Docker path.
 
 ## Development
 
@@ -175,52 +226,11 @@ bun run db:migrate
 
 `bun run dev` starts the API and watches the plugin build. The MCP server is normally launched on demand by its client because stdio owns standard input/output.
 
-## Import the plugin into Figma
+## Snapshot export details
 
-1. Run `bun run dev:plugin` once so `apps/plugin/dist` exists.
-2. Open the design in the Figma desktop app. Local manifests cannot be imported from the browser editor.
-3. Open the upper-left Figma menu and choose **Plugins → Development → Import new plugin from manifest**.
-4. Select `apps/plugin/manifest.json`.
-5. Open an editable design, run **Figma Mirror**, and verify that API shows `Connected`.
-
-The development manifest only allows `http://localhost:3000`. If `PORT` changes, update `devAllowedDomains` in the manifest and the endpoint shown in the plugin.
-
-## Export a frame
-
-1. Select a frame such as `Dashboard / Desktop`.
-2. Run **Figma Mirror**.
-3. Keep screenshot scale at `2×` (the default).
-4. Click **Export Selection**.
-
-The plugin serializes only that subtree, renders the authoritative PNG directly in Figma, uploads assets separately from JSON, and reports node/asset counts. **Export Current Page** mirrors visible top-level page content; hidden nodes are opt-in.
+The plugin serializes only the selected subtree, renders the authoritative PNG directly in Figma, uploads assets separately from JSON, and reports node/asset counts. **Export Current Page** mirrors visible top-level page content; hidden nodes are opt-in.
 
 The plugin captures normalized geometry, Auto Layout, fills/strokes/gradients, effects, mixed-style text runs, variable bindings and local collections, components/sets/instances, vector SVG, image bytes, paths, and warnings. Unsupported properties are omitted—not invented.
-
-## Configure Codex CLI
-
-From any shell, replacing `<REPO_PATH>` with the cloned repository path:
-
-```bash
-codex mcp add figma-mirror \
-  --env FIGMA_MIRROR_API_URL=http://localhost:3000 \
-  --env DATA_DIR=<REPO_PATH>/data \
-  -- bun run --cwd <REPO_PATH> dev:mcp
-codex mcp list
-```
-
-Codex supports local stdio MCP processes and stores their configuration in `config.toml`; the current official setup is documented in [OpenAI's MCP documentation](https://learn.chatgpt.com/docs/extend/mcp?surface=cli).
-
-## Configure Claude Code
-
-```bash
-claude mcp add figma-mirror \
-  --env FIGMA_MIRROR_API_URL=http://localhost:3000 \
-  --env DATA_DIR=<REPO_PATH>/data \
-  -- bun run --cwd <REPO_PATH> dev:mcp
-claude mcp get figma-mirror
-```
-
-This follows Claude Code's local stdio MCP form. No Figma credential is supplied to either client.
 
 ## MCP tools
 
